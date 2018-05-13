@@ -16,13 +16,7 @@
   <h2>
     <a href="https://en.wikipedia.org/wiki/Ackermann_function">Ackermanns function</a>
   </h2>
-  <p>
-    <pre><code>
-          ⎧n+1                if m = 0
-A(m, n) = ⎨A(m-1, n)          if m > 0 and n = 0
-          ⎩A(m-1, A(m, n-1))  if m > 0 and n > 0.
-    </code></pre>
-  </p>
+  <h3>MathML result</h3>
   <p>
     <math xmlns="http://www.w3.org/1998/Math/MathML">
       <mi>A</mi>
@@ -130,17 +124,23 @@ A(m, n) = ⎨A(m-1, n)          if m > 0 and n = 0
       </mrow>
     </math>
   </p>
+  <h3>TeX</h3>
+  <p>
+    <code>A(m,n)={\begin{cases}n+1&{\mbox{if }}m=0\\A(m-1,1)&{\mbox{if }}m>0{\mbox{ and }}n=0\\A(m-1,A(m,n-1))&{\mbox{if }}m>0{\mbox{ and }}n>0.\end{cases}}</code>
+  </p>
+  <h3>MathLite</h3>
+  <p>
+    <pre><code>
+          ⎧n+1                if m = 0
+A(m, n) = ⎨A(m-1, n)          if m > 0 and n = 0
+          ⎩A(m-1, A(m, n-1))  if m > 0 and n > 0.
+    </code></pre>
+  </p>
 
   <h2>
     <a href="https://en.wikipedia.org/wiki/Leibniz_formula_for_determinants">Leibniz formula for determinants</a>
   </h2>
-  <p>
-    <pre><code>
-                       n
-det (A) =  ∑   sgn(σ)  ∏ a↓{σ(i), i}
-         σ∈S↓n        i=1
-    </code></pre>
-  </p>
+  <h3>MathML result</h3>
   <p>
     <math xmlns="http://www.w3.org/1998/Math/MathML">
       <mo movablelimits="false" form="prefix">det</mo>
@@ -210,9 +210,23 @@ det (A) =  ∑   sgn(σ)  ∏ a↓{σ(i), i}
       </msub>
     </math>
   </p>
+  <h3>TeX</h3>
+  <p>
+    <code>\det(A)=\sum_{{\sigma\in S_{n}}}\operatorname{sgn}(\sigma )\prod_{{i=1}}^{n}a_{{\sigma(i),i}}</code>
+  </p>
+  <h3>MathLite</h3>
+  <p>
+    <pre><code>
+                       n
+det (A) =  ∑   sgn(σ)  ∏ a↓{σ(i), i}
+         σ∈S↓n        i=1
+    </code></pre>
+  </p>
 
-  <small>MathML generated with
-    <a href="https://www.mathjax.org/">MathJax</a>.</small>
+  <small>
+    MathML generated with
+    <a href="https://www.mathjax.org/">MathJax</a>. TeX formulas taken from the respective wikipedia page.
+  </small>
 
 </body>
 

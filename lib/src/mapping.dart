@@ -1,69 +1,92 @@
+import 'dart:collection' show UnmodifiableMapBase;
 import 'dart:convert' show LineSplitter;
 import 'dart:math';
 
-class Grid {
-  factory Grid.mapSource(String input,
-      {int lineOffset: 0, int columnOffset: 0}) {
-    final lines = const LineSplitter().convert(input);
-    final grid = new Grid._();
+/// This class gives efficient access to the characters of a string through
+/// their (x, y) coordinates, assuming that every character has a width and
+/// height of 1. UTF-16 surrogate pairs are treated as a single character, so
+/// they only occupy a single position. The indexing starts with (1, 1) in the
+/// top left corner.
+///
+/// Whitespace characters are not accessible through [operator[]], and the tab
+/// character `\t` is not supported.
+///
+/// The whole string is accessible through [source].
+class MappedString extends UnmodifiableMapBase<Point<int>, String> {
+  /// Creates a mapped string from [input].
+  ///
+  /// If [input] is part of another document and you want the (x, y) coordinates
+  /// to be absolute coordinates of that parent document, use [lineOffset] and
+  /// [columnOffset]. These parameters don't skip over parts of [input], but
+  /// only displace the keys for the character mapping and [dimensions].
+  factory MappedString(final String input,
+      {final int lineOffset: 0, final int columnOffset: 0}) {
+    final characters = <Point<int>, String>{};
 
-    var lineNumber = 1 + lineOffset;
-    for (final line in lines) {
-      var columnNumber = 1 + columnOffset;
+    var rightmostPosition = columnOffset;
+    var line = lineOffset;
+    for (final lineString in const LineSplitter().convert(input)) {
+      line++;
+      var column = columnOffset;
       for (final char
-          in line.runes.map((rune) => new String.fromCharCode(rune))) {
-        if (char != ' ') {
-          new Character(grid, columnNumber, lineNumber, char);
+          in lineString.runes.map((rune) => new String.fromCharCode(rune))) {
+        column++;
+        switch (char) {
+          case ' ':
+            break;
+          case '\t':
+            throw new ArgumentError('invalid character `\\t` '
+                'in line $line, column $column');
+          default:
+            characters[new Point(column, line)] = char;
         }
-        columnNumber++;
       }
-      lineNumber++;
-    }
-    return grid;
-  }
-
-  Grid._();
-
-  final Set<Fragment> rootFragments = new Set();
-
-  void _add(Fragment fragment) {
-    assert(fragment.grid == this);
-    fragment.children.forEach(rootFragments.remove);
-    rootFragments.add(fragment);
-  }
-}
-
-abstract class Fragment {
-  Fragment.withChildren(this.grid) {
-    for (final child in children) {
-      assert(child.parent == null, '$child already has a parent');
-      child._parent = this;
-      _box = _box == null ? child.box : _box.boundingBox(child.box);
+      rightmostPosition = max(rightmostPosition, column);
     }
 
-    grid._add(this);
+    return new MappedString._(
+        input,
+        new Rectangle.fromPoints(new Point(1 + columnOffset, 1 + lineOffset),
+            new Point(rightmostPosition, line)),
+        characters);
   }
 
-  Fragment._character(this.grid, this._box) {
-    grid._add(this);
-  }
+  MappedString._(this.source, this.dimensions, this._characters);
 
-  final Grid grid;
+  /// The "1-dimensional" string that is mapped by this object.
+  final String source;
 
-  Rectangle<int> _box;
-  Rectangle<int> get box => _box;
+  /// The width and height of this string. The leftmost characters in this
+  /// string have an x coordinate value of `dimensions.left`, the rightmost
+  /// characters an x coordinate value `dimensions.right`, and so forth.
+  ///
+  /// By default, `dimensions.topLeft` is (1, 1), but can be displaced by the
+  /// `lineOffset` and `columnOffset` arguments to the constructor.
+  final Rectangle<int> dimensions;
 
-  Fragment _parent;
-  Fragment get parent => _parent;
+  final Map<Point<int>, String> _characters;
 
-  Fragment get root => parent != null ? parent.root : this;
+  @override
+  String toString() => source;
 
-  Iterable<Fragment> get children => const [];
-}
+  @override
+  Iterable<MapEntry<Point<int>, String>> get entries => _characters.entries;
+  @override
+  bool get isEmpty => _characters.isEmpty;
+  @override
+  bool get isNotEmpty => _characters.isNotEmpty;
+  @override
+  Iterable<Point<int>> get keys => _characters.keys;
+  @override
+  int get length => _characters.length;
+  @override
+  Iterable<String> get values => _characters.values;
 
-class Character extends Fragment {
-  Character(Grid grid, int column, int line, this.character)
-      : super._character(grid, new Rectangle(column, line, 0, 0));
+  @override
+  bool containsKey(Object key) => _characters.containsKey(key);
+  @override
+  bool containsValue(Object value) => _characters.containsValue(value);
 
-  final String character;
+  @override
+  String operator [](Object position) => _characters[position];
 }

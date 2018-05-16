@@ -7,9 +7,6 @@ det (A) =  ∑   sgn(σ)  ∏ a↓{σ(i), i}
 ''';
 
 void main() {
-  final grid = new Grid.mapSource(exampleCode);
-  for (final char in grid.rootFragments.retype<Character>()) {
-    print(
-        '${char.character} (length: ${char.character.length}) at ${char.box}');
-  }
+  final grid = new MappedString(exampleCode);
+  grid.entries.forEach(print);
 }

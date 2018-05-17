@@ -24,7 +24,9 @@ const Point<int> left = const Point(-1, 0);
 /// Whitespace characters are not accessible through [operator[]], and the tab
 /// character `\t` is not supported.
 ///
-/// The whole string is accessible through [source].
+/// The whole string is accessible through [source]. The iteration order of
+/// [keys], [values] and [entries] is the same as the characters appear in the
+/// string. (line 1 before line 2, characters from left to right)
 class MappedString extends UnmodifiableMapBase<Point<int>, String> {
   /// Creates a mapped string from [input].
   ///

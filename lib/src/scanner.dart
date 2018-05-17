@@ -1,0 +1,128 @@
+import 'dart:math';
+import '../token_types.dart' as token_type;
+import 'grid.dart';
+import 'mapping.dart';
+
+/// The default list of patterns that is used by [scan] to recognize tokens in a
+/// source string.
+const List<TokenPattern> defaultPatterns = const [
+  // mathlite specific formatting
+  const TokenPattern('↑', token_type.infixOperator),
+  const TokenPattern('↓', token_type.infixOperator),
+
+  // brackets
+  const TokenPattern('(', token_type.fenceOperator),
+  const TokenPattern(')', token_type.fenceOperator),
+  const TokenPattern('[', token_type.fenceOperator),
+  const TokenPattern(']', token_type.fenceOperator),
+  const TokenPattern('{', token_type.fenceOperator),
+  const TokenPattern('}', token_type.fenceOperator),
+
+  // universal operators
+  const TokenPattern('=', token_type.infixOperator),
+  const TokenPattern(',', token_type.infixOperator),
+
+  // number arithmetic
+  const TokenPattern('+', token_type.infixOperator),
+  const TokenPattern('-', token_type.infixOperator),
+  const TokenPattern('*', token_type.infixOperator),
+  const TokenPattern('/', token_type.infixOperator),
+  const TokenPattern('√', token_type.prefixOperator),
+  const TokenPattern('∑', token_type.prefixOperator),
+  const TokenPattern('∏', token_type.prefixOperator),
+
+  // boolean logic
+  const TokenPattern('∀', token_type.infixOperator),
+  const TokenPattern('∃', token_type.infixOperator),
+  const TokenPattern('∄', token_type.infixOperator),
+  const TokenPattern('⋀', token_type.infixOperator),
+  const TokenPattern('⋁', token_type.infixOperator),
+
+  // sets
+  const TokenPattern('∅', token_type.identifier),
+  const TokenPattern('⊂', token_type.infixOperator),
+  const TokenPattern('⊃', token_type.infixOperator),
+  const TokenPattern('⊄', token_type.infixOperator),
+  const TokenPattern('⊅', token_type.infixOperator),
+  const TokenPattern('⊆', token_type.infixOperator),
+  const TokenPattern('⊇', token_type.infixOperator),
+  const TokenPattern('⋂', token_type.infixOperator),
+  const TokenPattern('⋃', token_type.infixOperator),
+  const TokenPattern('∖', token_type.infixOperator),
+  const TokenPattern('∈', token_type.infixOperator),
+  const TokenPattern('∉', token_type.infixOperator),
+  const TokenPattern('∋', token_type.infixOperator),
+  const TokenPattern('∌', token_type.infixOperator),
+];
+
+/// Compares substrings of [source] against all [patterns] to parse the raw
+/// string into tokens. Patterns are matched in the same order as they appear in
+/// [patterns], und characters are matched in iteration order. (left to right,
+/// line by line)
+///
+/// Throws an [ArgumentError] if a character in [source] doesn't match any
+/// pattern.
+Grid scan(final MappedString source, [Iterable<TokenPattern> patterns]) {
+  patterns ??= defaultPatterns;
+  final grid = new Grid(source);
+  for (final position in source.keys) {
+    if (grid.lookupPoint(position) != null) {
+      // This character has already been consumed by a vertical parse.
+      continue;
+    }
+
+    Token token;
+    for (final pattern in patterns) {
+      if ((token = pattern.match(source, position)) != null) break;
+    }
+    if (token != null) {
+      grid.add(token);
+    } else {
+      throw new ArgumentError('Parsing error in line ${position.y}, '
+          "column ${position.x}: Couldn't match the character "
+          '${source[position]} against any pattern');
+    }
+  }
+  return grid;
+}
+
+/// The simplest fragment type, and the only one that doesn't have any children.
+class Token extends Fragment {
+  Token(this.type, this.lexeme, Rectangle<int> dimensions) : super(dimensions);
+
+  final String type;
+
+  /// The characters that form this token.
+  final String lexeme;
+}
+
+///
+class TokenPattern {
+  const TokenPattern(this.pattern, this.type, {this.direction: right});
+
+  /// The pattern as a String. This should support RegExp-like syntax in the
+  /// future; Right now, it only recognizes on literal matches.
+  final String pattern;
+
+  /// If this pattern matches an input, it creates a [Token] of this type.
+  final String type;
+
+  /// Must be either [right] or [down].
+  final Point direction;
+
+  /// Returns a token of type [type], if [pattern] could be matched against
+  /// [input] at [position]. Else, returns `null`.
+  Token match(final MappedString input, final Point<int> position) {
+    var current = position;
+    final lexeme = new StringBuffer();
+    for (final expected
+        in pattern.runes.map((rune) => new String.fromCharCode(rune))) {
+      final char = input[current];
+      if (char != expected) return null;
+      direction == down ? lexeme.writeln(char) : lexeme.write(char);
+      current += direction;
+    }
+    return new Token(type, lexeme.toString(),
+        new Rectangle.fromPoints(position, current - direction));
+  }
+}

@@ -1,6 +1,19 @@
 import 'dart:collection' show UnmodifiableMapBase;
 import 'dart:convert' show LineSplitter;
 import 'dart:math';
+import 'package:meta/meta.dart';
+
+/// Points upwards in a [MappedString] coordinate system.
+const Point<int> up = const Point(0, -1);
+
+/// Points right in a [MappedString] coordinate system.
+const Point<int> right = const Point(1, 0);
+
+/// Points downwards in a [MappedString] coordinate system.
+const Point<int> down = const Point(0, 1);
+
+/// Points left in a [MappedString] coordinate system.
+const Point<int> left = const Point(-1, 0);
 
 /// This class gives efficient access to the characters of a string through
 /// their (x, y) coordinates, assuming that every character has a width and
@@ -65,6 +78,24 @@ class MappedString extends UnmodifiableMapBase<Point<int>, String> {
   final Rectangle<int> dimensions;
 
   final Map<Point<int>, String> _characters;
+
+  /// Yields all non-space characters in the specified direction, starting from
+  /// [position], exclusive. You can use [up], [right], [down] and [left] as
+  /// directions. Stops on the first space character if [breakOnSpace] is
+  /// `true`.
+  Iterable<MapEntry<Point<int>, String>> neighbours(
+      {@required Point<int> position,
+      @required final Point<int> direction,
+      final bool breakOnSpace: true}) sync* {
+    while (dimensions.containsPoint(position += direction)) {
+      final char = this[position];
+      if (char != null) {
+        yield new MapEntry(position, char);
+      } else if (breakOnSpace) {
+        return;
+      }
+    }
+  }
 
   @override
   String toString() => source;

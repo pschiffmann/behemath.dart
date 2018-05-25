@@ -1,6 +1,6 @@
 import 'dart:math';
 import '../token_types.dart' as token_type;
-import 'grid.dart';
+import 'ast.dart';
 import 'mapping.dart';
 
 /// The default list of patterns that is used by [scan] to recognize tokens in a
@@ -11,12 +11,12 @@ const List<TokenPattern> defaultPatterns = const [
   const TokenPattern('↓', token_type.infixOperator),
 
   // brackets
-  const TokenPattern('(', token_type.fenceOperator),
-  const TokenPattern(')', token_type.fenceOperator),
-  const TokenPattern('[', token_type.fenceOperator),
-  const TokenPattern(']', token_type.fenceOperator),
-  const TokenPattern('{', token_type.fenceOperator),
-  const TokenPattern('}', token_type.fenceOperator),
+  const TokenPattern('(', token_type.lparen),
+  const TokenPattern(')', token_type.rparen),
+  const TokenPattern('[', token_type.lbracket),
+  const TokenPattern(']', token_type.rbracket),
+  const TokenPattern('{', token_type.lbrace),
+  const TokenPattern('}', token_type.rbrace),
 
   // universal operators
   const TokenPattern('=', token_type.infixOperator),
@@ -62,28 +62,29 @@ const List<TokenPattern> defaultPatterns = const [
 ///
 /// Throws an [ArgumentError] if a character in [source] doesn't match any
 /// pattern.
-Grid scan(final MappedString source, [Iterable<TokenPattern> patterns]) {
-  patterns ??= defaultPatterns;
-  final grid = new Grid(source);
+Document scan(final MappedString source,
+    [Iterable<TokenPattern> patterns = defaultPatterns]) {
+  final document = new Document(source);
+  processCharacter:
   for (final position in source.keys) {
-    if (grid.lookupPoint(position) != null) {
+    if (document.lookupPoint(position) != null) {
       // This character has already been consumed by a vertical parse.
       continue;
     }
 
-    Token token;
     for (final pattern in patterns) {
-      if ((token = pattern.match(source, position)) != null) break;
+      final token = pattern.match(source, position);
+      if (token != null) {
+        document.add(token);
+        continue processCharacter;
+      }
     }
-    if (token != null) {
-      grid.add(token);
-    } else {
-      throw new ArgumentError('Parsing error in line ${position.y}, '
-          "column ${position.x}: Couldn't match the character "
-          '${source[position]} against any pattern');
-    }
+
+    throw new ArgumentError('Parsing error in line ${position.y}, '
+        "column ${position.x}: Couldn't match the character "
+        '${source[position]} against any pattern');
   }
-  return grid;
+  return document;
 }
 
 /// The simplest fragment type, and the only one that doesn't have any children.
@@ -94,6 +95,9 @@ class Token extends Fragment {
 
   /// The characters that form this token.
   final String lexeme;
+
+  @override
+  Iterable<Fragment> get children => const [];
 }
 
 ///

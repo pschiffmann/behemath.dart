@@ -12,4 +12,12 @@ const String infixOperator = 'infixOperator';
 
 /// The term _fence operator_ is borrowed from the Mozilla MathML documentation.
 /// This token type is used for brackets and "absolute value" bars.
-const String fenceOperator = 'fenceOperator';
+// const String fenceOperator = 'fenceOperator';
+
+const String lparen = '(';
+const String rparen = ')';
+const String lbracket = '[';
+const String rbracket = ']';
+const String lbrace = '{';
+const String rbrace = '}';
+const String bar = '|';

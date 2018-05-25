@@ -8,7 +8,7 @@ det (A) =  ∑   sgn(σ)  ∏ a↓{σ(i), i}
 ''';
 
 void main() {
-  final grid = scan(
+  final document = scan(
       new MappedString(exampleCode),
       defaultPatterns +
           [
@@ -22,7 +22,5 @@ void main() {
             const TokenPattern('n', token_type.identifier),
             const TokenPattern('1', token_type.number),
           ]);
-  for (final token in grid.rootFragments.retype<Token>()) {
-    print('${token.lexeme} at ${token.dimensions}');
-  }
+  assemble(document);
 }

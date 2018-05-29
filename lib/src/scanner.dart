@@ -1,7 +1,9 @@
 import 'dart:math';
 import '../token_types.dart' as token_type;
 import 'ast.dart';
+import 'directions.dart' show down, right;
 import 'mapping.dart';
+import 'parser.dart' show Document;
 
 /// The default list of patterns that is used by [scan] to recognize tokens in a
 /// source string.
@@ -64,7 +66,7 @@ const List<TokenPattern> defaultPatterns = const [
 /// pattern.
 Document scan(final MappedString source,
     [Iterable<TokenPattern> patterns = defaultPatterns]) {
-  final document = new Document(source);
+  final document = new Document(source.dimensions);
   processCharacter:
   for (final position in source.keys) {
     if (document.lookupPoint(position) != null) {
@@ -89,7 +91,9 @@ Document scan(final MappedString source,
 
 /// The simplest fragment type, and the only one that doesn't have any children.
 class Token extends Fragment {
-  Token(this.type, this.lexeme, Rectangle<int> dimensions) : super(dimensions);
+  Token(this.type, this.lexeme, Point<int> firstCharacter,
+      Point<int> lastCharacter)
+      : super(firstCharacter, lastCharacter);
 
   final String type;
 
@@ -126,7 +130,6 @@ class TokenPattern {
       direction == down ? lexeme.writeln(char) : lexeme.write(char);
       current += direction;
     }
-    return new Token(type, lexeme.toString(),
-        new Rectangle.fromPoints(position, current - direction));
+    return new Token(type, lexeme.toString(), position, current - direction);
   }
 }

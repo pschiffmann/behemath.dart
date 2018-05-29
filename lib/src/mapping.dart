@@ -2,18 +2,7 @@ import 'dart:collection' show UnmodifiableMapBase;
 import 'dart:convert' show LineSplitter;
 import 'dart:math';
 import 'package:meta/meta.dart';
-
-/// Points upwards in a [MappedString] coordinate system.
-const Point<int> up = const Point(0, -1);
-
-/// Points right in a [MappedString] coordinate system.
-const Point<int> right = const Point(1, 0);
-
-/// Points downwards in a [MappedString] coordinate system.
-const Point<int> down = const Point(0, 1);
-
-/// Points left in a [MappedString] coordinate system.
-const Point<int> left = const Point(-1, 0);
+import 'directions.dart' show down, left, right, up;
 
 /// This class gives efficient access to the characters of a string through
 /// their (x, y) coordinates, assuming that every character has a width and

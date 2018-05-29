@@ -1,92 +1,113 @@
+import 'dart:math';
 import '../token_types.dart' as token_type;
 import 'ast.dart';
+import 'directions.dart';
+import 'grid.dart';
 import 'scanner.dart';
 
 /// Maps opening to closing brackets.
-const Map<String, String> closingBrackets = const {
+const Map<String, String> brackets = const {
   token_type.lparen: token_type.rparen,
   token_type.lbracket: token_type.rbracket,
   token_type.lbrace: token_type.rbrace,
-  token_type.bar: token_type.bar
 };
-
-/// Token types that indicate the end of a [FencedBlock].
-const List<String> rightBrackets = const [
-  token_type.rparen,
-  token_type.rbracket,
-  token_type.rbrace
-];
 
 /// Restructures the assigned document into a meaningful syntax tree. [document]
 /// is modified in-place. This method expects that [document] contains only
 /// [Token] fragments.
-void assemble(Document document) {
-  final containers = <Container>[document];
-  for (final token in new List<Token>.from(document.rootFragments)) {
-    if (token.container != document) {
-      // This token has been claimed by a descendant [FencedBlock].
-      continue;
-    } else if (token.parent != null) {
-      // This token is a closing bracket in a descendant [FencedBlock].
-      continue;
+Fragment parse(Document document) {
+  recognizeBlocks(document).forEach(assemble);
+  return null;
+  //return document.single;
+}
+
+///
+Iterable<Grid> recognizeBlocks(Document document) sync* {
+  final it = new PrioritizingIterator(document.cast<Token>());
+  final unclosedBrackets = <Token>[];
+
+  while (it.moveNext()) {
+    final token = it.current;
+
+    if (unclosedBrackets.isNotEmpty) {
+      final leftBracket = unclosedBrackets.last;
+      if (token.bottom < leftBracket.top || token.top > leftBracket.bottom) {
+        // We read past the end of the current brackets right hand side.
+        throw new ParseException('Unclosed bracket', leftBracket);
+      }
+      if (token.top < leftBracket.top && token.bottom > leftBracket.top ||
+          token.top < leftBracket.bottom && token.bottom > leftBracket.bottom) {
+        throw new ParseException('token spans across a fenced block');
+      }
     }
 
-    final closingBracket = closingBrackets[token.type];
-    if (closingBracket != null) {
-      parseFencedBlock(document, token, closingBracket, containers);
+    if (brackets.containsKey(token.type)) {
+      unclosedBrackets.add(token);
+      it.prioritizeColumn(token.top, token.bottom);
+    } else if (brackets.containsValue(token.type)) {
+      if (unclosedBrackets.isEmpty) {
+        throw new ParseException('Unbalanced bracket', token);
+      }
+      final leftBracket = unclosedBrackets.last;
+      if (token.type != brackets[leftBracket.type] ||
+          token.top != leftBracket.top ||
+          token.bottom != leftBracket.bottom) {
+        throw new ParseException('Unbalanced bracket', token);
+      }
+      unclosedBrackets.removeLast();
+      if (leftBracket.right + 1 != token.left) {
+        yield new GridSection(
+            document,
+            new Rectangle.fromPoints(
+                leftBracket.topLeft + right, token.bottomRight + left));
+      }
     }
   }
+  if (unclosedBrackets.isNotEmpty) {
+    throw new ParseException('Unclosed bracket', unclosedBrackets.last);
+  }
+  yield document;
+}
 
-  for (final container in containers) {
-    print(container.body);
+///
+void assemble(Grid grid) {
+  print(grid.dimensions);
+}
+
+/// During parsing, fragments are stored in a mutable [Document] object.
+class Document extends Grid<Fragment> {
+  Document(Rectangle<int> dimensions) : super(dimensions);
+
+  /// Adds [fragment] and removes all its [Fragment.children] from this
+  /// document. Throws an [AssertionError] if [fragment] was already in this
+  /// document, or any of its children was not.
+  @override
+  void add(Fragment fragment) {
+    fragment.children.forEach(remove);
+    assert(lookupArea(fragment).isEmpty);
+    super.add(fragment);
   }
 }
 
-/// Parses the [FencedBlock] that starts with [leftBracket], adds it as a child
-/// of [document], and places it in [containers]. Returns a reference to the
-/// created fragment.
-FencedBlock parseFencedBlock(Document document, Token leftBracket,
-    String rightBracket, List<Container> containers) {
-  final claimed = <Fragment>[];
-  for (final fragment in document.rightOf(leftBracket)) {
-    final token = fragment as Token;
-    if (token.container != document) {
-      // This token has been claimed by a descendant [FencedBlock].
-      continue;
-    } else if (token.parent != null) {
-      // This token is a closing bracket in a descendant [FencedBlock].
-      continue;
-    }
+class RowCandidate {
+  RowCandidate(Fragment fragment)
+      : fragments = [fragment],
+        top = fragment.top,
+        bottom = fragment.bottom;
 
-    // We found a right bracket. Either [token] terminates this FencedBlock, or
-    // this is a syntax error.
-    if (rightBrackets.contains(token.type)) {
-      if (token.type == rightBracket &&
-          token.dimensions.height == leftBracket.dimensions.height &&
-          token.dimensions.top == leftBracket.dimensions.top) {
-        final result = new FencedBlock(leftBracket, token);
-        claimed.forEach(result.claim);
-        document.add(result);
-        containers.add(result);
-        return result;
-      } else {
-        throw new ParseException('Unbalanced bracket', token);
-      }
-    }
-    // We found a left bracket. Start a new [FencedBlock] parse and add the
-    // result as a root fragment of this one.
-    else if (closingBrackets.containsKey(token.type)) {
-      claimed.add(parseFencedBlock(
-          document, token, closingBrackets[token.type], containers));
-    }
-    // We found a non-bracket token. Claim it as a root fragment of this and let
-    // the subsequent parse phases handle it.
-    else {
-      claimed.add(token);
-    }
+  final List<Fragment> fragments;
+
+  int top;
+  int bottom;
+
+  void add(Fragment fragment) {
+    fragments.add(fragment);
+    top = min(top, fragment.top);
+    bottom = max(bottom, fragment.bottom);
   }
-  // We found no right bracket that could close this block.
-  throw new ParseException('No closing bracket found', leftBracket);
+
+  bool containsHeight(Rectangle<int> area) =>
+      top <= area.top && bottom >= area.bottom;
 }
 
 /// Thrown by the parser if it encounters invalid input.
@@ -99,7 +120,6 @@ class ParseException implements Exception {
   @override
   String toString() => fragment == null
       ? 'Parsing error: $message'
-      : 'Parsing error at fragment '
-      '(${fragment.dimensions.top}, ${fragment.dimensions.left})-'
-      '(${fragment.dimensions.bottom}x${fragment.dimensions.right}): $message';
+      : 'Parsing error at fragment (${fragment.top}, ${fragment.left})-'
+      '(${fragment.bottom}x${fragment.right}): $message';
 }

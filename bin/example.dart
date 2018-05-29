@@ -22,5 +22,5 @@ void main() {
             const TokenPattern('n', token_type.identifier),
             const TokenPattern('1', token_type.number),
           ]);
-  assemble(document);
+  parse(document);
 }

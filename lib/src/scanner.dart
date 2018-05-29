@@ -102,6 +102,9 @@ class Token extends Fragment {
 
   @override
   Iterable<Fragment> get children => const [];
+
+  @override
+  R accept<R>(FragmentVisitor<R> visitor) => visitor.visitToken(this);
 }
 
 ///

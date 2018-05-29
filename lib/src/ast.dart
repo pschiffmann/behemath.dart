@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'parser.dart' show Document;
 import 'scanner.dart' show Token;
+export 'scanner.dart' show Token;
 
 /// Calculates the minimum bounding box that contains all rectangles in
 /// [contained].
@@ -27,6 +28,8 @@ abstract class Fragment extends Rectangle<int> {
 
   /// All child fragments that this object is composed of.
   Iterable<Fragment> get children;
+
+  R accept<R>(FragmentVisitor<R> visitor);
 }
 
 class Row extends Fragment {
@@ -36,6 +39,9 @@ class Row extends Fragment {
 
   @override
   final List<Fragment> children;
+
+  @override
+  R accept<R>(FragmentVisitor<R> visitor) => visitor.visitRow(this);
 }
 
 class Stack extends Fragment {
@@ -45,6 +51,9 @@ class Stack extends Fragment {
 
   @override
   final List<Fragment> children;
+
+  @override
+  R accept<R>(FragmentVisitor<R> visitor) => visitor.visitStack(this);
 }
 
 class Fraction extends Fragment {
@@ -61,6 +70,9 @@ class Fraction extends Fragment {
     yield numerator;
     yield denominator;
   }
+
+  @override
+  R accept<R>(FragmentVisitor<R> visitor) => visitor.visitFraction(this);
 }
 
 /// Represents a section of a [Document] that is surrounded by brackets or
@@ -80,4 +92,16 @@ class FencedBlock extends Fragment {
   Iterable<Fragment> get children sync* {
     yield body;
   }
+
+  @override
+  R accept<R>(FragmentVisitor<R> visitor) => visitor.visitFencedBlock(this);
+}
+
+/// https://en.wikipedia.org/wiki/Visitor_pattern
+abstract class FragmentVisitor<R> {
+  R visitFencedBlock(FencedBlock fragment);
+  R visitFraction(Fraction fragment);
+  R visitRow(Row fragment);
+  R visitStack(Stack fragment);
+  R visitToken(Token fragment);
 }

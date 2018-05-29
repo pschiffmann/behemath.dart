@@ -3,7 +3,6 @@ import '../token_types.dart' as token_type;
 import 'ast.dart';
 import 'directions.dart';
 import 'grid.dart';
-import 'scanner.dart';
 
 /// Maps opening to closing brackets.
 const Map<String, String> brackets = const {

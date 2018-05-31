@@ -89,12 +89,14 @@ Document scan(final MappedString source,
   return document;
 }
 
-/// The simplest fragment type, and the only one that doesn't have any children.
+/// Token fragments represent the logical entities from which a fragment tree is
+/// built up, like a single operator, identifier or number.
 class Token extends Fragment {
   Token(this.type, this.lexeme, Point<int> firstCharacter,
       Point<int> lastCharacter)
       : super(firstCharacter, lastCharacter);
 
+  /// One of the values defined in `package:mathlite/token_types.dart`.
   final String type;
 
   /// The characters that form this token.

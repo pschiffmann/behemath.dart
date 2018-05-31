@@ -57,7 +57,7 @@ class Grid<E extends Rectangle<int>> extends IterableBase<E> {
       .firstWhere((rect) => rect.containsPoint(point), orElse: () => null);
 
   /// Returns all fragments that intersect [area].
-  Iterable<E> lookupArea(Rectangle<int> area, [Comparator<E> order]) =>
+  Iterable<E> lookupArea(Rectangle<int> area) =>
       _elements.where((rect) => rect.intersects(area));
 
   List<E> lookupSorted(Rectangle<int> area, Comparator<E> order) =>
@@ -66,7 +66,7 @@ class Grid<E extends Rectangle<int>> extends IterableBase<E> {
   /// Returns all fragment in this container that intersect the rectangle to the
   /// right of `rect`. The result is ordered first by column from left to right,
   /// then by line top to bottom.
-  List<E> rightOf(Rectangle<int> rect) => lookupArea(
+  List<E> rightOf(Rectangle<int> rect) => lookupSorted(
       new Rectangle(
           rect.right + 1, rect.top, dimensions.right - rect.right, rect.height),
       columnByColumnLeftToRight);

@@ -1,6 +1,8 @@
 import 'ast.dart';
 
-String generateMathml(Fragment fragment) {
+/// Generates a String in MathML syntax that corresponds to the assigned
+/// fragment tree.
+String generateMathml(final Fragment fragment) {
   final generator = new _MathmlGenerator();
   fragment.accept(generator);
   return generator.result.toString();
@@ -10,19 +12,30 @@ class _MathmlGenerator extends FragmentVisitor<void> {
   final StringBuffer result = new StringBuffer();
 
   @override
-  void visitFencedBlock(FencedBlock fragment) => throw new UnimplementedError();
+  void visitFencedBlock(final FencedBlock fragment) =>
+      throw new UnimplementedError();
 
   @override
-  void visitFraction(Fraction fragment) => throw new UnimplementedError();
+  void visitFraction(final Fraction fragment) => throw new UnimplementedError();
 
   @override
-  void visitRow(Row fragment) => throw new UnimplementedError();
+  void visitRow(final Row fragment) {
+    result.write('<mrow>');
+    for (final child in fragment.children) {
+      child.accept(this);
+    }
+    result.write('</mrow>');
+  }
 
   @override
-  void visitStack(Stack fragment) => throw new UnimplementedError();
+  void visitStack(final Stack fragment) => throw new UnimplementedError();
 
   @override
-  void visitToken(Token fragment) {
+  void visitToken(final Token fragment) {
     result.write(fragment.lexeme);
   }
+
+  @override
+  void visitUnderOverScript(final UnderOverScript fragment) =>
+      throw new UnimplementedError();
 }

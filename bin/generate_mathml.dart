@@ -31,5 +31,29 @@ final Fragment equation = new Row([
 ]);
 
 void main() {
+  // expected output:
+  //
+  // <mrow>
+  //   <munderover>
+  //     <mo>∏</mo>
+  //     <mrow>
+  //       <mi>i</mi>
+  //       <mo> = </mro>
+  //       <mn>1</mn>
+  //     </mrow>
+  //     <mi>n</mn>
+  //   </munderover>
+  //   <msub>
+  //     <mi>a</mi>
+  //     <mrow>
+  //       <mi>σ</mi>
+  //       <mo>(</mo>
+  //       <mi>i</mi>
+  //       <mo>)</mo>
+  //       <mo>,</mo>
+  //       <mi>i</mi>
+  //     </mrow>
+  //   </msub>
+  // </mrow>
   print(generateMathml(equation));
 }

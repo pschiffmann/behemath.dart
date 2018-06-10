@@ -78,9 +78,9 @@ class Stack extends Fragment {
 /// [2]: https://developer.mozilla.org/en-US/docs/Web/MathML/Element/munder
 /// [3]: https://developer.mozilla.org/en-US/docs/Web/MathML/Element/mover
 class UnderOverScript extends Fragment {
-  UnderOverScript(this.base, this.underScript, this.overScript)
-      : assert(underScript != null || overScript != null),
-        super.fromRectangle(boundingBox([base, underScript, overScript]));
+  UnderOverScript(this.base, this.underscript, this.overscript)
+      : assert(underscript != null || overscript != null),
+        super.fromRectangle(boundingBox([base, underscript, overscript]));
 
   /// The operator or identifier to which the under- or overscripts are
   /// attached.
@@ -88,20 +88,45 @@ class UnderOverScript extends Fragment {
 
   /// The underscript of [base], or `null` if [base] doesn't have an
   /// underscript.
-  final Fragment underScript;
+  final Fragment underscript;
 
   /// The overscript of [base], or `null` if [base] doesn't have an overscript.
-  final Fragment overScript;
+  final Fragment overscript;
 
-  /// Returns [underScript], then [overScript], if they are not `null`.
+  /// Returns [underscript], then [overscript], if they are not `null`.
   @override
   Iterable<Fragment> get children sync* {
-    if (underScript != null) yield underScript;
-    if (overScript != null) yield overScript;
+    if (underscript != null) yield underscript;
+    if (overscript != null) yield overscript;
   }
 
   @override
   R accept<R>(FragmentVisitor<R> visitor) => visitor.visitUnderOverScript(this);
+}
+
+/// Represents an [`msubsup`][1], [`msub`][2] or [`msup`][3] tag.
+///
+/// [1]: https://developer.mozilla.org/en-US/docs/Web/MathML/Element/munderover
+/// [2]: https://developer.mozilla.org/en-US/docs/Web/MathML/Element/munder
+/// [3]: https://developer.mozilla.org/en-US/docs/Web/MathML/Element/mover
+class SubSuperScript extends Fragment {
+  SubSuperScript(this.base, this.subscript, this.superscript)
+      : assert(subscript != null || superscript != null),
+        super.fromRectangle(boundingBox([base, subscript, superscript]));
+
+  final Fragment base;
+  final Fragment subscript;
+  final Fragment superscript;
+
+  /// Returns [subscript], then [superscript], if they are not `null`.
+  @override
+  Iterable<Fragment> get children sync* {
+    if (subscript != null) yield subscript;
+    if (superscript != null) yield superscript;
+  }
+
+  @override
+  R accept<R>(FragmentVisitor<R> visitor) => visitor.visitSubSuperScript(this);
 }
 
 /// Represents a vertically stacked fraction.
@@ -155,6 +180,8 @@ abstract class FragmentVisitor<R> {
   R visitRow(Row fragment);
   @visibleForOverriding
   R visitStack(Stack fragment);
+  @visibleForOverriding
+  R visitSubSuperScript(SubSuperScript fragment);
   @visibleForOverriding
   R visitToken(Token fragment);
   @visibleForOverriding

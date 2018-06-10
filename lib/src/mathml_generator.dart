@@ -31,6 +31,10 @@ class _MathmlGenerator extends FragmentVisitor<void> {
   void visitStack(final Stack fragment) => throw new UnimplementedError();
 
   @override
+  void visitSubSuperScript(final SubSuperScript fragment) =>
+      throw new UnimplementedError();
+
+  @override
   void visitToken(final Token fragment) {
     result.write(fragment.lexeme);
   }

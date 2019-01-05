@@ -4,6 +4,8 @@ import 'ast.dart';
 import 'directions.dart';
 import 'grid.dart';
 
+part 'parse_rows.dart';
+
 /// Maps opening to closing brackets.
 const Map<String, String> brackets = const {
   token_type.lparen: token_type.rparen,
@@ -70,7 +72,7 @@ Iterable<Grid> recognizeBlocks(Document document) sync* {
 
 ///
 void assemble(Grid grid) {
-  print(grid.dimensions);
+  assembleRows(grid, 1);
 }
 
 /// During parsing, fragments are stored in a mutable [Document] object.
@@ -86,27 +88,6 @@ class Document extends Grid<Fragment> {
     assert(lookupArea(fragment).isEmpty);
     super.add(fragment);
   }
-}
-
-class RowCandidate {
-  RowCandidate(Fragment fragment)
-      : fragments = [fragment],
-        top = fragment.top,
-        bottom = fragment.bottom;
-
-  final List<Fragment> fragments;
-
-  int top;
-  int bottom;
-
-  void add(Fragment fragment) {
-    fragments.add(fragment);
-    top = min(top, fragment.top);
-    bottom = max(bottom, fragment.bottom);
-  }
-
-  bool containsHeight(Rectangle<int> area) =>
-      top <= area.top && bottom >= area.bottom;
 }
 
 /// Thrown by the parser if it encounters invalid input.
